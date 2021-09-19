@@ -10,10 +10,13 @@ export interface HitCounterProps {
   downstream: lambda.IFunction;
 }
 
-// new construct class
+// new construct class HitCounter
 export class HitCounter extends cdk.Construct {
     /** allows accessing the counter function **/
     public readonly handler: lambda.Function;
+
+    /** hit counter table - making it accessible to stack.ts **/
+    public readonly table: dynamodb.Table;
 
     constructor(scope: cdk.Construct, id: string, props: HitCounterProps) {
         super(scope, id);
@@ -21,8 +24,12 @@ export class HitCounter extends cdk.Construct {
 
         // define a DynamoDB table with "path" as a partition key
         const table = new dynamodb.Table(this, 'Hits', {
-            partitionKey: { name: 'path', type: dynamodb.AttributeType.STRING }
+            partitionKey: { 
+                name: 'path', 
+                type: dynamodb.AttributeType.STRING 
+            }
         });
+        this.table = table;
 
         // define Lambda function bound to lambda/hitcounter.handler code
         this.handler = new lambda.Function(this, 'HitCounterHandler', {
@@ -36,5 +43,11 @@ export class HitCounter extends cdk.Construct {
                 HITS_TABLE_NAME: table.tableName
             }
         });
+
+        //grant lambda role read/write permissions to table
+        table.grantReadWriteData(this.handler);
+
+        // grant lambda role invoke permissions to downstream function
+        props.downstream.grantInvoke(this.handler);
     }
 }

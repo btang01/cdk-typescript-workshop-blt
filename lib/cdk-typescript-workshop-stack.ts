@@ -2,6 +2,7 @@ import * as cdk from '@aws-cdk/core';
 import * as lambda from '@aws-cdk/aws-lambda'
 import * as apigw from '@aws-cdk/aws-apigateway'
 import { HitCounter } from './hitcounter';
+import { TableViewer } from 'cdk-dynamo-table-viewer';
 
 export class CdkTypescriptWorkshopStack extends cdk.Stack {
   constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
@@ -27,6 +28,12 @@ export class CdkTypescriptWorkshopStack extends cdk.Stack {
     // this adds 12 resources to our stack!
     new apigw.LambdaRestApi(this, 'Endpoint', {
       handler: helloWithCounter.handler
+    });
+
+    // hitcounter.ts grants stack access to this table
+    new TableViewer(this, 'ViewHitCounter', {
+      title: 'Hello Hits',
+      table: helloWithCounter.table
     });
 
   }
